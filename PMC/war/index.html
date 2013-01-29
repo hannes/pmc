@@ -12,9 +12,15 @@
 
 	<form action="/pmc" method="GET">
 		<input type="hidden" name="action" value="submit" /> URL<input
-			type="text" name="url" /><br /> Interval <input type="text"
-			name="interval" /><br /> Email <input type="text" name="email" /><br />
-		<input type="submit" />
+			type="text" name="url" /><br /> Interval <select name="interval"
+			size="0">
+			<option value="3600">1 hour</option>
+			<option value="86400">1 day</option>
+			<option value="604800">1 week</option>
+			<option value="2419200">1 month</option>
+
+		</select><br /> Email <input type="text" name="email" /><br /> <input
+			type="submit" />
 
 
 	</form>
