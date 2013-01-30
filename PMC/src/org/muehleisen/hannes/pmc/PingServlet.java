@@ -23,9 +23,13 @@ import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.appengine.api.datastore.Text;
+import com.google.appengine.api.urlfetch.HTTPHeader;
+import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
+
+import org.apache.commons.codec.binary.Base64;
 
 @SuppressWarnings("serial")
 public class PingServlet extends HttpServlet {
@@ -48,7 +52,7 @@ public class PingServlet extends HttpServlet {
 
 		// fire off async requests
 		for (Entity job : pq.asIterable()) {
-			String url = (String) job.getProperty("url");
+			URL url = new URL((String) job.getProperty("url"));
 			long intervalSeconds = (Long) job.getProperty("intervalSeconds");
 			Calendar timeLimit = Calendar.getInstance();
 			timeLimit.add(Calendar.SECOND, (int) (-1 * intervalSeconds));
@@ -56,8 +60,32 @@ public class PingServlet extends HttpServlet {
 			if (!job.hasProperty("lastResponseTime")
 					|| ((Date) job.getProperty("lastResponseTime"))
 							.before(timeLimit.getTime())) {
-				Future<HTTPResponse> responseFuture = fetcher
-						.fetchAsync(new URL(url));
+
+				Future<HTTPResponse> responseFuture = null;
+				if (url.getUserInfo() != null
+						&& url.getUserInfo().contains(":")) {
+					String authorizationString = "Basic "
+							+ Base64.encodeBase64String(url.getUserInfo()
+									.getBytes());
+
+					if (url.getPort() != -1) {
+						url = new URL(url.getProtocol(), url.getHost(),
+								url.getPort(), url.getFile());
+					} else {
+						url = new URL(url.getProtocol(), url.getHost(),
+								url.getFile());
+					}
+
+					log.info("Requesting " + url + " with basic authentication");
+					HTTPRequest fetchRequest = new HTTPRequest(url);
+					fetchRequest.addHeader(new HTTPHeader("Authorization",
+							authorizationString));
+					responseFuture = fetcher.fetchAsync(fetchRequest);
+				} else {
+					log.info("Requesting " + url);
+					responseFuture = fetcher.fetchAsync(url);
+				}
+
 				asyncResponses.put(job, responseFuture);
 			}
 		}
