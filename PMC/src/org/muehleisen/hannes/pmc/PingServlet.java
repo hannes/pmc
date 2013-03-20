@@ -1,5 +1,7 @@
 package org.muehleisen.hannes.pmc;
 
+import static com.google.appengine.api.urlfetch.FetchOptions.Builder.withDeadline;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.Calendar;
@@ -19,13 +21,13 @@ import org.apache.commons.codec.binary.Base64;
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.appengine.api.datastore.Text;
 import com.google.appengine.api.urlfetch.HTTPHeader;
+import com.google.appengine.api.urlfetch.HTTPMethod;
 import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.appengine.api.urlfetch.URLFetchService;
@@ -77,14 +79,16 @@ public class PingServlet extends HttpServlet {
 					}
 
 					log.info("Requesting " + url + " with basic authentication");
-					HTTPRequest fetchRequest = new HTTPRequest(url);
+					HTTPRequest fetchRequest = new HTTPRequest(url,
+							HTTPMethod.GET, withDeadline(TIME_LIMIT_SECS));
 					fetchRequest.addHeader(new HTTPHeader("Authorization",
 							authorizationString));
-					fetchRequest.getFetchOptions().setDeadline(new Double(600));
 					responseFuture = fetcher.fetchAsync(fetchRequest);
 				} else {
 					log.info("Requesting " + url);
-					responseFuture = fetcher.fetchAsync(url);
+					HTTPRequest fetchRequest = new HTTPRequest(url,
+							HTTPMethod.GET, withDeadline(TIME_LIMIT_SECS));
+					responseFuture = fetcher.fetchAsync(fetchRequest);
 				}
 
 				asyncResponses.put(job, responseFuture);
