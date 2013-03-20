@@ -2,7 +2,6 @@ package org.muehleisen.hannes.pmc;
 
 import java.io.IOException;
 import java.net.URL;
-import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -15,9 +14,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.codec.binary.Base64;
+
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
 import com.google.appengine.api.datastore.Query.FilterOperator;
@@ -28,8 +30,6 @@ import com.google.appengine.api.urlfetch.HTTPRequest;
 import com.google.appengine.api.urlfetch.HTTPResponse;
 import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
-
-import org.apache.commons.codec.binary.Base64;
 
 @SuppressWarnings("serial")
 public class PingServlet extends HttpServlet {
@@ -80,6 +80,7 @@ public class PingServlet extends HttpServlet {
 					HTTPRequest fetchRequest = new HTTPRequest(url);
 					fetchRequest.addHeader(new HTTPHeader("Authorization",
 							authorizationString));
+					fetchRequest.getFetchOptions().setDeadline(new Double(600));
 					responseFuture = fetcher.fetchAsync(fetchRequest);
 				} else {
 					log.info("Requesting " + url);
